@@ -1,0 +1,101 @@
+when i logout and redirect to the login page the fields is shown in input auto filled i want full protected do that   
+
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"; 
+import { Label } from "@/components/ui/label";
+import { useRouter } from 'next/router';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../db/firebase'; // Assume this is your Firebase config
+import { Navigate, useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+
+export default function Signin() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        // Validate form inputs
+        if(password.length < 8) {
+            toast.error("Password must be at least 8 characters long");
+            return;
+        }
+
+        if(email.length === 0 || password.length === 0) {
+            toast.error("All fields are required");
+            return;
+        }
+
+        try {
+            // Query Firestore users collection for matching email
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('email', '==', email), where('password', '==', password));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                // Get the user document data
+                const userDoc = querySnapshot.docs[0];
+                const userData = userDoc.data();
+
+                // Store user info in a cookie/session
+                Cookies.set('user', JSON.stringify({
+                    id: userDoc.id,
+                    email: userData.email,
+                    type: userData.type,
+                }), { expires: 1 }); // Expires in 1 day
+
+                toast.success(`${userData.type} Logged in successfully!`);
+                
+                // Redirect to dashboard
+                navigate('/dashboard');
+            } else {
+                toast.error("Email or password is incorrect");
+            }
+        } catch (error) {
+            console.error("Error logging in:", error);
+            toast.error("Error logging in. Please try again.");
+        }
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-100 p-4">
+            <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+                <h3 className='text-center text-3xl font-bold'>Sign In</h3>
+                <form onSubmit={handleSubmit}>
+                    <div className='my-4'>
+                        <Label htmlFor="email" className="text-lg font-semibold">Email</Label>
+                        <Input
+                            id="email"
+                            type="text"
+                            placeholder="enter email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className='my-4'>
+                        <Label htmlFor="password" className="text-lg font-semibold">Password</Label>
+                        <Input
+                            id="password"
+                            type="password"
+                            placeholder="enter password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <Button type="submit" size="lg" className="w-full text-lg my-2">
+                        Sign In
+                    </Button>
+                </form>
+            </div>
+        </div>
+    );
+}

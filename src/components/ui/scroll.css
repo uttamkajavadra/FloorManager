@@ -1,0 +1,14 @@
+/* Custom Scrollbar Styling */
+.scrollbar-custom::-webkit-scrollbar {
+    height: 8px; /* Set scrollbar height for horizontal scroll */
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent; /* Transparent background for the track */
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 100, 100, 0.5); /* Gray thumb */
+    border-radius: 9999px; /* Rounded corners */
+  }
+  
